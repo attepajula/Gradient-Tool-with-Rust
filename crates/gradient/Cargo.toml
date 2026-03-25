@@ -1,0 +1,11 @@
+[package]
+name = "gradient"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+image = { version = "0.24", default-features = false, features = ["jpeg", "png"] }
+kmeans_colors = "0.6"
+palette = { version = "0.7", features = ["std"] }
+serde = { version = "1", features = ["derive"] }
+thiserror = "1"
