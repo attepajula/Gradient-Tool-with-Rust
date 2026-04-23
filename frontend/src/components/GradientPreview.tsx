@@ -17,7 +17,10 @@ export default function GradientPreview({ url, loading, error }: Props) {
     <div className="card preview-card">
       <div className="preview-area">
         {error ? (
-          <div className="preview-error">{error}</div>
+          <div className="preview-error">
+            <span className="error-shrug">¯\_(ツ)_/¯</span>
+            <span className="error-msg">something went wrong</span>
+          </div>
         ) : url ? (
           <img
             src={url}

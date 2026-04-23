@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react'
 import { Paradigm, Warp } from '../App'
 
 interface Props {
@@ -9,6 +10,44 @@ interface Props {
   onWarpChange: (v: Warp) => void
   onWidthChange: (v: number) => void
   onHeightChange: (v: number) => void
+}
+
+function SizeInput({
+  label, value, min, max, onChange,
+}: { label: string; value: number; min: number; max: number; onChange: (v: number) => void }) {
+  const [raw, setRaw] = useState(String(value))
+  const focusedRef = useRef(false)
+
+  // Sync display when parent value changes while not editing
+  useEffect(() => {
+    if (!focusedRef.current) setRaw(String(value))
+  }, [value])
+
+  const commit = (s: string) => {
+    const n = parseInt(s, 10)
+    if (!isNaN(n)) {
+      const clamped = Math.min(Math.max(n, min), max)
+      onChange(clamped)
+      setRaw(String(clamped))
+    } else {
+      setRaw(String(value))
+    }
+  }
+
+  return (
+    <div className="control-group">
+      <label>{label}</label>
+      <input
+        type="number"
+        min={min} max={max}
+        value={raw}
+        onChange={(e) => setRaw(e.target.value)}
+        onFocus={() => { focusedRef.current = true }}
+        onBlur={(e) => { focusedRef.current = false; commit(e.target.value) }}
+        onKeyDown={(e) => { if (e.key === 'Enter') commit((e.target as HTMLInputElement).value) }}
+      />
+    </div>
+  )
 }
 
 const PARADIGMS: { value: Paradigm; label: string; description: string }[] = [
@@ -52,25 +91,8 @@ export default function GradientControls({
           </select>
         </div>
 
-        <div className="control-group">
-          <label>Width (px)</label>
-          <input
-            type="number"
-            min={1} max={4096}
-            value={width}
-            onChange={(e) => onWidthChange(Number(e.target.value))}
-          />
-        </div>
-
-        <div className="control-group">
-          <label>Height (px)</label>
-          <input
-            type="number"
-            min={1} max={4096}
-            value={height}
-            onChange={(e) => onHeightChange(Number(e.target.value))}
-          />
-        </div>
+        <SizeInput label="Width (px)"  value={width}  min={1} max={4096} onChange={onWidthChange} />
+        <SizeInput label="Height (px)" value={height} min={1} max={4096} onChange={onHeightChange} />
       </div>
     </div>
   )

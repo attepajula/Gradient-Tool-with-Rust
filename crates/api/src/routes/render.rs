@@ -41,11 +41,11 @@ pub async fn render(Json(req): Json<RenderRequest>) -> Result<impl IntoResponse,
     if req.colors.len() > 32 {
         return Err(ApiError::BadRequest("too many colors (max 32)".into()));
     }
-    if req.width == 0 || req.width > 2048 {
-        return Err(ApiError::BadRequest("width must be between 1 and 2048".into()));
+    if req.width == 0 || req.width > 4096 {
+        return Err(ApiError::BadRequest("width must be between 1 and 4096".into()));
     }
-    if req.height == 0 || req.height > 2048 {
-        return Err(ApiError::BadRequest("height must be between 1 and 2048".into()));
+    if req.height == 0 || req.height > 4096 {
+        return Err(ApiError::BadRequest("height must be between 1 and 4096".into()));
     }
 
     let colors: Vec<Color> = req
