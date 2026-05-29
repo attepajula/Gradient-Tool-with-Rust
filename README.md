@@ -94,7 +94,7 @@ Multipart upload with field `image` (JPEG or PNG, max 10 MB). Returns dominant c
 cargo run -p api
 
 # Terminal 2 — Frontend dev server (port 5173)
-cd frontend && npm install && npm run dev
+cd frontend && pnpm install && pnpm run dev
 ```
 
 Open **http://localhost:5173**
@@ -102,7 +102,7 @@ Open **http://localhost:5173**
 To test the production build locally:
 
 ```bash
-cd frontend && npm run build && cd ..
+cd frontend && pnpm run build && cd ..
 cargo run -p api
 # open http://localhost:3000
 ```

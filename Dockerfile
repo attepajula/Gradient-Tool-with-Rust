@@ -1,10 +1,11 @@
 # ── Stage 1: Build frontend ───────────────────────────────────────────────────
 FROM node:20-alpine AS frontend
 WORKDIR /app/frontend
-COPY frontend/package*.json ./
-RUN npm ci
+RUN npm install -g pnpm
+COPY frontend/package.json frontend/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 COPY frontend/ ./
-RUN npm run build
+RUN pnpm run build
 
 # ── Stage 2: Build Rust backend ───────────────────────────────────────────────
 FROM rust:1.94 AS backend
