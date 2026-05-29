@@ -8,7 +8,7 @@ Extract colors from a photo — or pick them by hand — and render them into a 
 
 ## How it works
 
-Upload a photo and the API clusters its pixels in perceptually-uniform Lab color space to find the dominant colors. Those colors are then interpolated into a gradient and rendered as a JPEG you can download.
+Upload a photo and the API clusters its pixels in perceptually-uniform Lab color space to find the dominant colors. Those colors are rendered into a gradient JPEG you can download.
 
 ### Source photo
 
@@ -33,9 +33,12 @@ Upload a photo and the API clusters its pixels in perceptually-uniform Lab color
 ## Features
 
 - **Photo upload** — drag & drop a JPEG or PNG, get back 5 dominant colors
-- **Manual color picker** — add, remove, and edit colors freely
-- **4 gradient paradigms** — linear, diagonal, radial, reflected
-- **6 warp styles** — none, ease in/out, smooth step, wave, zigzag
+- **Manual color picker** — add, remove, and reorder colors freely
+- **Color presets** — Sunset, Ocean, Forest, Neon, Monochrome, Candy
+- **5 gradient styles** — linear, diagonal, radial, reflected, free
+- **Draggable color points** — drag each color's handle directly on the preview image
+- **Free style** — place color centers anywhere; blended by inverse-distance weighting
+- **Noise** — baked film grain in the rendered JPEG, adjustable 0–100%
 - **Live preview** — gradient re-renders 250 ms after any change
 - **Download** — full-resolution JPEG straight from the API
 
@@ -48,12 +51,46 @@ Upload a photo and the API clusters its pixels in perceptually-uniform Lab color
 | API | Rust · Axum · Tokio |
 | Color extraction | k-means clustering in Lab color space (`kmeans_colors`) |
 | Image decode/encode | `image` crate |
-| Frontend | React 18 · TypeScript · Vite |
+| Frontend | React 18 · TypeScript · Vite · pnpm |
 | Hosting | Fly.io |
 
 ---
 
 ## API
+
+### `POST /api/gradient/render`
+
+```json
+{
+  "stops": [
+    { "hex": "#e8534a", "position": 0.0 },
+    { "hex": "#f0a500", "position": 0.5 },
+    { "hex": "#4a90d9", "position": 1.0 }
+  ],
+  "width": 1200,
+  "height": 160,
+  "paradigm": "radial",
+  "noise": 0.05
+}
+```
+
+For `free` paradigm, include `x` and `y` (normalized 0–1) on each stop instead of `position`:
+
+```json
+{
+  "stops": [
+    { "hex": "#e8534a", "x": 0.2, "y": 0.3, "position": 0 },
+    { "hex": "#4a90d9", "x": 0.8, "y": 0.7, "position": 0 }
+  ],
+  "paradigm": "free",
+  "width": 1200,
+  "height": 800
+}
+```
+
+Returns an `image/jpeg` binary.
+
+**Paradigms:** `linear` · `diagonal` · `radial` · `reflected` · `free`
 
 ### `POST /api/gradient/from-colors`
 
@@ -63,23 +100,6 @@ Upload a photo and the API clusters its pixels in perceptually-uniform Lab color
   "steps": 10
 }
 ```
-
-### `POST /api/gradient/render`
-
-```json
-{
-  "colors": ["#e8534a", "#f0a500", "#4a90d9"],
-  "width": 1200,
-  "height": 160,
-  "paradigm": "radial",
-  "warp": "ease_in_out"
-}
-```
-
-Returns a `image/jpeg` binary.
-
-**Paradigms:** `linear` · `diagonal` · `radial` · `reflected`
-**Warps:** `none` · `ease_in` · `ease_out` · `ease_in_out` · `wave` · `zigzag`
 
 ### `POST /api/image/extract-colors`
 
@@ -110,7 +130,7 @@ cargo run -p api
 ### Shell script demo
 
 ```bash
-./demo.sh photo.jpg                          # linear, no warp
-./demo.sh photo.jpg -p radial -w ease_in_out # radial with easing
-./demo.sh photo.jpg -p diagonal -w wave      # diagonal wave
+./demo.sh photo.jpg                 # linear, no noise
+./demo.sh photo.jpg -p radial       # radial
+./demo.sh photo.jpg -p diagonal     # diagonal
 ```
