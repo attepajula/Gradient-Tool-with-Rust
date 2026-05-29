@@ -55,6 +55,7 @@ pub fn render_jpeg(
     paradigm: Paradigm,
     warp: Warp,
     points: GradientPoints,
+    noise: f32,
 ) -> Vec<u8> {
     let mut img = RgbImage::new(width, height);
 
@@ -66,6 +67,8 @@ pub fn render_jpeg(
     let dy = by - ay;
     let len2 = (dx * dx + dy * dy).max(f32::EPSILON);
     let radius = len2.sqrt();
+
+    let noise_amp = (noise.clamp(0.0, 1.0) * 127.0) as i32;
 
     for y in 0..height {
         for x in 0..width {
@@ -87,7 +90,12 @@ pub fn render_jpeg(
 
             let t = apply_warp(raw_t.clamp(0.0, 1.0), warp);
             let color = sample_stops(stops, t);
-            img.put_pixel(x, y, image::Rgb([color.r, color.g, color.b]));
+
+            let r = (color.r as i32 + noise_offset(x, y, 0) * noise_amp / 127).clamp(0, 255) as u8;
+            let g = (color.g as i32 + noise_offset(x, y, 1) * noise_amp / 127).clamp(0, 255) as u8;
+            let b = (color.b as i32 + noise_offset(x, y, 2) * noise_amp / 127).clamp(0, 255) as u8;
+
+            img.put_pixel(x, y, image::Rgb([r, g, b]));
         }
     }
 
@@ -95,6 +103,18 @@ pub fn render_jpeg(
     img.write_to(&mut buf, ImageOutputFormat::Jpeg(quality))
         .expect("JPEG encoding should not fail for a valid RgbImage");
     buf.into_inner()
+}
+
+/// Returns a value in [-1, 1] for a given pixel + channel using a hash PRNG.
+fn noise_offset(x: u32, y: u32, ch: u32) -> i32 {
+    let mut h = x.wrapping_mul(2246822519)
+        .wrapping_add(y.wrapping_mul(3266489917))
+        .wrapping_add(ch.wrapping_mul(0x9e3779b9));
+    h ^= h >> 16;
+    h = h.wrapping_mul(0x45d9f3b);
+    h ^= h >> 16;
+    // map 0..u32::MAX → -127..127
+    ((h as i64 * 255 / u32::MAX as i64) - 127) as i32
 }
 
 fn apply_warp(t: f32, warp: Warp) -> f32 {

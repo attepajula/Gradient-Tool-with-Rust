@@ -12,6 +12,7 @@ export interface RenderParams {
   quality: number
   paradigm: string
   warp: string
+  noise: number
 }
 
 export async function extractColors(file: File): Promise<ExtractColorsResponse> {

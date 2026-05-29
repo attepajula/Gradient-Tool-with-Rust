@@ -263,6 +263,37 @@ select:focus, input[type="number"]:focus {
   border-color: var(--accent);
 }
 
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+  height: 4px;
+  padding: 0;
+  background: transparent;
+}
+
+.noise-group {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.noise-group label {
+  white-space: nowrap;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  min-width: 90px;
+}
+
+.noise-value {
+  color: var(--text);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 /* ── Preview ────────────────────────────────────────────────────────────── */
 
 .preview-card {

@@ -29,6 +29,7 @@ export default function App() {
   const [paradigm, setParadigm] = useState<Paradigm>('linear')
   const [width, setWidth] = useState(1200)
   const [height, setHeight] = useState(200)
+  const [noise, setNoise] = useState(0)
   const [gradientUrl, setGradientUrl] = useState<string | null>(null)
   const [rendering, setRendering] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -46,6 +47,7 @@ export default function App() {
         height,
         paradigm,
         warp: 'none',
+        noise,
         quality: 92,
       })
       const url = URL.createObjectURL(blob)
@@ -57,7 +59,7 @@ export default function App() {
     } finally {
       setRendering(false)
     }
-  }, [stops, paradigm, width, height])
+  }, [stops, paradigm, width, height, noise])
 
   useEffect(() => {
     const t = setTimeout(render, 250)
@@ -100,9 +102,11 @@ export default function App() {
             paradigm={paradigm}
             width={width}
             height={height}
+            noise={noise}
             onParadigmChange={setParadigm}
             onWidthChange={setWidth}
             onHeightChange={setHeight}
+            onNoiseChange={setNoise}
             onStopsChange={setStops}
           />
           <GradientPreview

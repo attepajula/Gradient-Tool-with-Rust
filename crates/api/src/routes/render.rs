@@ -40,6 +40,8 @@ pub struct RenderRequest {
     pub paradigm: Paradigm,
     #[serde(default)]
     pub warp: Warp,
+    #[serde(default)]
+    pub noise: f32,
 }
 
 fn default_width() -> u32 { 800 }
@@ -105,11 +107,12 @@ pub async fn render(Json(req): Json<RenderRequest>) -> Result<impl IntoResponse,
 
     let (width, height, quality) = (req.width, req.height, req.quality.clamp(1, 100));
     let warp = req.warp;
+    let noise = req.noise.clamp(0.0, 1.0);
 
     let jpeg = tokio::time::timeout(
         RENDER_TIMEOUT,
         tokio::task::spawn_blocking(move || {
-            render_jpeg(&positioned, width, height, quality, paradigm, warp, points)
+            render_jpeg(&positioned, width, height, quality, paradigm, warp, points, noise)
         }),
     )
     .await

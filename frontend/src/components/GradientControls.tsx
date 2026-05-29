@@ -5,9 +5,11 @@ interface Props {
   paradigm: Paradigm
   width: number
   height: number
+  noise: number
   onParadigmChange: (v: Paradigm) => void
   onWidthChange: (v: number) => void
   onHeightChange: (v: number) => void
+  onNoiseChange: (v: number) => void
   onStopsChange: (stops: Stop[]) => void
 }
 
@@ -67,8 +69,8 @@ const PRESETS: Preset[] = [
 ]
 
 export default function GradientControls({
-  paradigm, width, height,
-  onParadigmChange, onWidthChange, onHeightChange, onStopsChange,
+  paradigm, width, height, noise,
+  onParadigmChange, onWidthChange, onHeightChange, onNoiseChange, onStopsChange,
 }: Props) {
   const applyPreset = (label: string) => {
     const preset = PRESETS.find(p => p.label === label)
@@ -99,6 +101,16 @@ export default function GradientControls({
 
         <SizeInput label="Width (px)"  value={width}  min={1} max={4096} onChange={onWidthChange} />
         <SizeInput label="Height (px)" value={height} min={1} max={4096} onChange={onHeightChange} />
+
+        <div className="control-group noise-group">
+          <label>Noise <span className="noise-value">{Math.round(noise * 100)}%</span></label>
+          <input
+            type="range"
+            min={0} max={1} step={0.01}
+            value={noise}
+            onChange={(e) => onNoiseChange(parseFloat(e.target.value))}
+          />
+        </div>
       </div>
     </div>
   )
