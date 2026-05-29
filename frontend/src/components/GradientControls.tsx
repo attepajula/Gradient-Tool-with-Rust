@@ -55,6 +55,7 @@ const PARADIGMS: { value: Paradigm; label: string; description: string }[] = [
   { value: 'diagonal',  label: 'Diagonal',  description: 'Corner → corner' },
   { value: 'radial',    label: 'Radial',    description: 'Center → edges' },
   { value: 'reflected', label: 'Reflected', description: 'Edges → center' },
+  { value: 'free',      label: 'Free',      description: 'Drag points anywhere' },
 ]
 
 interface Preset { label: string; stops: { hex: string; position: number }[] }

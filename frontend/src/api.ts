@@ -6,7 +6,7 @@ export interface ExtractColorsResponse {
 }
 
 export interface RenderParams {
-  stops: { hex: string; position: number }[]
+  stops: { hex: string; position: number; x: number; y: number }[]
   width: number
   height: number
   quality: number

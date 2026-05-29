@@ -1,5 +1,5 @@
 import { useRef, useCallback } from 'react'
-import { Stop, Paradigm } from '../App'
+import { Stop, Paradigm, stopToXY } from '../App'
 
 interface Props {
   url: string | null
@@ -10,31 +10,14 @@ interface Props {
   onStopsChange: (stops: Stop[]) => void
 }
 
-function stopToXY(stop: Stop, paradigm: Paradigm): { x: number; y: number } {
-  const t = stop.position
-  switch (paradigm) {
-    case 'linear':
-      return { x: t, y: 0.5 }
-    case 'diagonal':
-      return { x: t, y: t }
-    case 'radial':
-      return { x: 0.5 + t * 0.5, y: 0.5 }
-    case 'reflected':
-      return { x: 0.5 + (1 - t) * 0.5, y: 0.5 }
-  }
-}
-
 function xyToT(x: number, y: number, paradigm: Paradigm): number {
   const clamp = (v: number) => Math.max(0, Math.min(1, v))
   switch (paradigm) {
-    case 'linear':
-      return clamp(x)
-    case 'diagonal':
-      return clamp((x + y) / 2)
-    case 'radial':
-      return clamp(2 * Math.sqrt((Math.max(0.5, x) - 0.5) ** 2 + (y - 0.5) ** 2))
-    case 'reflected':
-      return clamp(1 - 2 * Math.sqrt((Math.max(0.5, x) - 0.5) ** 2 + (y - 0.5) ** 2))
+    case 'linear':    return clamp(x)
+    case 'diagonal':  return clamp((x + y) / 2)
+    case 'radial':    return clamp(2 * Math.sqrt((Math.max(0.5, x) - 0.5) ** 2 + (y - 0.5) ** 2))
+    case 'reflected': return clamp(1 - 2 * Math.sqrt((Math.max(0.5, x) - 0.5) ** 2 + (y - 0.5) ** 2))
+    case 'free':      return 0 // unused
   }
 }
 
@@ -43,16 +26,23 @@ export default function GradientPreview({ url, loading, error, stops, paradigm, 
   const draggingId = useRef<string | null>(null)
   const stopsRef = useRef(stops)
   stopsRef.current = stops
+  const paradigmRef = useRef(paradigm)
+  paradigmRef.current = paradigm
 
   const onMouseMove = useCallback((e: MouseEvent) => {
     const id = draggingId.current
     if (!id || !wrapRef.current) return
     const rect = wrapRef.current.getBoundingClientRect()
-    const x = (e.clientX - rect.left) / rect.width
-    const y = (e.clientY - rect.top) / rect.height
-    const t = xyToT(x, y, paradigm)
-    onStopsChange(stopsRef.current.map(s => s.id === id ? { ...s, position: t } : s))
-  }, [paradigm, onStopsChange])
+    const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+    const y = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height))
+    const p = paradigmRef.current
+
+    onStopsChange(stopsRef.current.map(s => {
+      if (s.id !== id) return s
+      if (p === 'free') return { ...s, x, y }
+      return { ...s, position: xyToT(x, y, p) }
+    }))
+  }, [onStopsChange])
 
   const onMouseUp = useCallback(() => {
     draggingId.current = null

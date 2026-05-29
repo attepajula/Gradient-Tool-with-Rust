@@ -5,17 +5,30 @@ import ColorPalette from './components/ColorPalette'
 import GradientControls from './components/GradientControls'
 import GradientPreview from './components/GradientPreview'
 
-export type Paradigm = 'linear' | 'diagonal' | 'radial' | 'reflected'
+export type Paradigm = 'linear' | 'diagonal' | 'radial' | 'reflected' | 'free'
 
 export interface Stop {
   id: string
   hex: string
-  position: number
+  position: number  // 0–1 scalar, used by non-free paradigms
+  x: number         // 0–1 normalized image coord, used by free paradigm
+  y: number
 }
 
 let nextId = 1
-export function makeStop(hex: string, position: number): Stop {
-  return { id: String(nextId++), hex, position }
+export function makeStop(hex: string, position: number, x?: number, y?: number): Stop {
+  return { id: String(nextId++), hex, position, x: x ?? position, y: y ?? 0.5 }
+}
+
+export function stopToXY(stop: Stop, paradigm: Paradigm): { x: number; y: number } {
+  const t = stop.position
+  switch (paradigm) {
+    case 'linear':    return { x: t, y: 0.5 }
+    case 'diagonal':  return { x: t, y: t }
+    case 'radial':    return { x: 0.5 + t * 0.5, y: 0.5 }
+    case 'reflected': return { x: 0.5 + (1 - t) * 0.5, y: 0.5 }
+    case 'free':      return { x: stop.x, y: stop.y }
+  }
 }
 
 const DEFAULT_STOPS: Stop[] = [
@@ -35,6 +48,21 @@ export default function App() {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const prevUrlRef = useRef<string | null>(null)
+  const paradigmRef = useRef(paradigm)
+  paradigmRef.current = paradigm
+
+  const handleParadigmChange = (next: Paradigm) => {
+    const prev = paradigmRef.current
+    setStops(s => s.map(stop => {
+      if (next === 'free') {
+        // snapshot current visual position into x, y
+        const { x, y } = stopToXY(stop, prev)
+        return { ...stop, x, y }
+      }
+      return stop
+    }))
+    setParadigm(next)
+  }
 
   const render = useCallback(async () => {
     if (stops.length === 0) return
@@ -42,7 +70,7 @@ export default function App() {
     setError(null)
     try {
       const blob = await renderGradient({
-        stops: stops.map(s => ({ hex: s.hex, position: s.position })),
+        stops: stops.map(s => ({ hex: s.hex, position: s.position, x: s.x, y: s.y })),
         width,
         height,
         paradigm,
@@ -72,9 +100,10 @@ export default function App() {
     try {
       const { dominant_colors } = await extractColors(file)
       const n = dominant_colors.length
-      setStops(dominant_colors.map((hex, i) =>
-        makeStop(hex, n === 1 ? 0 : i / (n - 1))
-      ))
+      setStops(dominant_colors.map((hex, i) => {
+        const position = n === 1 ? 0 : i / (n - 1)
+        return makeStop(hex, position)
+      }))
     } catch (e) {
       setError(String(e))
     } finally {
@@ -103,7 +132,7 @@ export default function App() {
             width={width}
             height={height}
             noise={noise}
-            onParadigmChange={setParadigm}
+            onParadigmChange={handleParadigmChange}
             onWidthChange={setWidth}
             onHeightChange={setHeight}
             onNoiseChange={setNoise}
