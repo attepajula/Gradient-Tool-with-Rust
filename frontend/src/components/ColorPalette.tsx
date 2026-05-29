@@ -1,20 +1,22 @@
+import { Stop, makeStop } from '../App'
+
 interface RowProps {
-  id: string
-  color: string
+  stop: Stop
   onChange: (hex: string) => void
   onRemove: () => void
   canRemove: boolean
 }
 
-function ColorRow({ id, color, onChange, onRemove, canRemove }: RowProps) {
+function ColorRow({ stop, onChange, onRemove, canRemove }: RowProps) {
+  const id = `cp-${stop.id}`
   return (
     <div className="color-row">
-      <label htmlFor={id} className="swatch" style={{ background: color }} title={color} />
-      <span className="color-hex">{color}</span>
+      <label htmlFor={id} className="swatch" style={{ background: stop.hex }} title={stop.hex} />
+      <span className="color-hex">{stop.hex}</span>
       <input
         id={id}
         type="color"
-        value={color}
+        value={stop.hex}
         onChange={(e) => onChange(e.target.value)}
         className="color-picker"
       />
@@ -31,33 +33,32 @@ function ColorRow({ id, color, onChange, onRemove, canRemove }: RowProps) {
 }
 
 interface Props {
-  colors: string[]
-  onChange: (colors: string[]) => void
+  stops: Stop[]
+  onChange: (stops: Stop[]) => void
 }
 
-export default function ColorPalette({ colors, onChange }: Props) {
-  const update = (i: number, hex: string) => {
-    const next = [...colors]
-    next[i] = hex
-    onChange(next)
+export default function ColorPalette({ stops, onChange }: Props) {
+  const update = (id: string, hex: string) =>
+    onChange(stops.map(s => s.id === id ? { ...s, hex } : s))
+
+  const remove = (id: string) => onChange(stops.filter(s => s.id !== id))
+
+  const add = () => {
+    const pos = stops.length === 0 ? 1 : Math.min(1, stops[stops.length - 1].position + 0.1)
+    onChange([...stops, makeStop('#ffffff', pos)])
   }
-
-  const remove = (i: number) => onChange(colors.filter((_, idx) => idx !== i))
-
-  const add = () => onChange([...colors, '#ffffff'])
 
   return (
     <div className="card">
       <h2 className="card-title">Colors</h2>
       <div className="color-list">
-        {colors.map((color, i) => (
+        {stops.map(stop => (
           <ColorRow
-            key={i}
-            id={`color-picker-${i}`}
-            color={color}
-            onChange={(hex) => update(i, hex)}
-            onRemove={() => remove(i)}
-            canRemove={colors.length > 1}
+            key={stop.id}
+            stop={stop}
+            onChange={(hex) => update(stop.id, hex)}
+            onRemove={() => remove(stop.id)}
+            canRemove={stops.length > 1}
           />
         ))}
       </div>

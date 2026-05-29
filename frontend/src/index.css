@@ -284,11 +284,34 @@ select:focus, input[type="number"]:focus {
   justify-content: center;
 }
 
+.preview-img-wrap {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
 .preview-img {
   display: block;
-  align-items: center;
   transition: opacity 0.2s;
 }
+
+.gradient-point {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.45), 0 2px 5px rgba(0,0,0,0.5);
+  transform: translate(-50%, -50%);
+  cursor: grab;
+  transition: transform 0.1s;
+}
+
+.gradient-point:hover {
+  transform: translate(-50%, -50%) scale(1.25);
+}
+
+.gradient-point:active { cursor: grabbing; }
 
 .preview-updating { opacity: 0.6; }
 
@@ -353,6 +376,7 @@ select:focus, input[type="number"]:focus {
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
 
 /* ── Responsive ─────────────────────────────────────────────────────────── */
 

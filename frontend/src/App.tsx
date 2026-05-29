@@ -6,12 +6,27 @@ import GradientControls from './components/GradientControls'
 import GradientPreview from './components/GradientPreview'
 
 export type Paradigm = 'linear' | 'diagonal' | 'radial' | 'reflected'
-export type Warp = 'none' | 'ease_in' | 'ease_out' | 'ease_in_out' | 'wave' | 'zigzag'
+
+export interface Stop {
+  id: string
+  hex: string
+  position: number
+}
+
+let nextId = 1
+export function makeStop(hex: string, position: number): Stop {
+  return { id: String(nextId++), hex, position }
+}
+
+const DEFAULT_STOPS: Stop[] = [
+  makeStop('#e8534a', 0),
+  makeStop('#f0a500', 0.5),
+  makeStop('#4a90d9', 1),
+]
 
 export default function App() {
-  const [colors, setColors] = useState<string[]>(['#e8534a', '#f0a500', '#4a90d9'])
+  const [stops, setStops] = useState<Stop[]>(DEFAULT_STOPS)
   const [paradigm, setParadigm] = useState<Paradigm>('linear')
-  const [warp, setWarp] = useState<Warp>('none')
   const [width, setWidth] = useState(1200)
   const [height, setHeight] = useState(200)
   const [gradientUrl, setGradientUrl] = useState<string | null>(null)
@@ -21,11 +36,18 @@ export default function App() {
   const prevUrlRef = useRef<string | null>(null)
 
   const render = useCallback(async () => {
-    if (colors.length === 0) return
+    if (stops.length === 0) return
     setRendering(true)
     setError(null)
     try {
-      const blob = await renderGradient({ colors, width, height, paradigm, warp, quality: 92 })
+      const blob = await renderGradient({
+        stops: stops.map(s => ({ hex: s.hex, position: s.position })),
+        width,
+        height,
+        paradigm,
+        warp: 'none',
+        quality: 92,
+      })
       const url = URL.createObjectURL(blob)
       if (prevUrlRef.current) URL.revokeObjectURL(prevUrlRef.current)
       prevUrlRef.current = url
@@ -35,9 +57,8 @@ export default function App() {
     } finally {
       setRendering(false)
     }
-  }, [colors, paradigm, warp, width, height])
+  }, [stops, paradigm, width, height])
 
-  // Debounced auto-render on any change
   useEffect(() => {
     const t = setTimeout(render, 250)
     return () => clearTimeout(t)
@@ -48,7 +69,10 @@ export default function App() {
     setError(null)
     try {
       const { dominant_colors } = await extractColors(file)
-      setColors(dominant_colors)
+      const n = dominant_colors.length
+      setStops(dominant_colors.map((hex, i) =>
+        makeStop(hex, n === 1 ? 0 : i / (n - 1))
+      ))
     } catch (e) {
       setError(String(e))
     } finally {
@@ -68,24 +92,26 @@ export default function App() {
       <main className="main">
         <aside className="sidebar">
           <ImageUpload onUpload={handleImageUpload} loading={uploading} />
-          <ColorPalette colors={colors} onChange={setColors} />
+          <ColorPalette stops={stops} onChange={setStops} />
         </aside>
 
         <section className="content">
           <GradientControls
             paradigm={paradigm}
-            warp={warp}
             width={width}
             height={height}
             onParadigmChange={setParadigm}
-            onWarpChange={setWarp}
             onWidthChange={setWidth}
             onHeightChange={setHeight}
+            onStopsChange={setStops}
           />
           <GradientPreview
             url={gradientUrl}
             loading={rendering}
             error={error}
+            stops={stops}
+            paradigm={paradigm}
+            onStopsChange={setStops}
           />
         </section>
       </main>
